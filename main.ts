@@ -15,6 +15,16 @@ const dest = join(outDir, "entry.png");
 mkdirSync(outDir, { recursive: true });
 copyFileSync(src, dest);
 
+// The competition requires at most 1024x1024: verify the PNG dimensions
+// from the IHDR chunk (width/height, big-endian, bytes 16-23) and fail
+// loudly if the poster is not exactly 1024x1024.
+const header = readFileSync(src);
+const width = header.readUInt32BE(16);
+const height = header.readUInt32BE(20);
+if (width !== 1024 || height !== 1024) {
+  throw new Error(`entry.png must be 1024x1024, got ${width}x${height}`);
+}
+
 // Verify the copy is byte-identical to the source image.
 const srcHash = createHash("sha256").update(readFileSync(src)).digest("hex");
 const destHash = createHash("sha256").update(readFileSync(dest)).digest("hex");
